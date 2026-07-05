@@ -31,6 +31,30 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 - [x] Add iCloud + CloudKit capabilities to the target and an entitlements file.
 - [ ] Add a unit test target (currently none exists).
 
+## v2 status — structured records + French (2026-07-05)
+
+- **Ingredient catalog**: reusable `Ingredient`, created on the fly, with per-ingredient
+  allowed dimensions (poids/volume/compte) + opt-in customary volumes (c.à s./c.à c./tasse).
+  `RecipeIngredient` line items = quantity + unit + note, linked to a catalog entry.
+- **Structured steps**: action, durée, température, vitesse, + ingredients-used (many-to-many).
+- **Variants**: fork-copy via `Recipe.parent`/`variants` + `makeVariant()`. Schema is
+  inheritance-ready (stable `uid` on Recipe/RecipeIngredient/Step) for the later live-
+  inheritance phase (parent→child per-element override propagation) — NOT built yet.
+- **Experiments** can target a specific ingredient or step.
+- **French** throughout the UI. (Hardcoded FR strings; wrap in a String Catalog if we ever
+  want EN too.)
+- Verified: builds, CloudKit `ModelContainer` initializes (rich schema valid), launches,
+  French empty state renders. Deployed to iSQR.
+- Deploy note: schema change is not a lightweight migration (old `steps` text → relationship),
+  so devices must **uninstall before installing** a build that crosses that change. Fresh data.
+
+### Next candidates
+- [ ] On-device pass: add a recipe with structured ingredients/steps, a variant, an
+      experiment targeting a step; confirm iCloud sync to a 2nd device.
+- [ ] Reordering ingredients/steps (drag). Currently order is add-order only.
+- [ ] Live parent→child inheritance with per-element overrides (the big one).
+- [ ] Volume↔weight conversion per ingredient (needs density) — optional.
+
 ## v1 status (built 2026-07-05)
 
 - App renamed `@main struct Kuisine`, SwiftData `ModelContainer` on CloudKit private DB.
