@@ -55,6 +55,24 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 - [ ] Live parent→child inheritance with per-element overrides (the big one).
 - [ ] Volume↔weight conversion per ingredient (needs density) — optional.
 
+## v4 — units as data + process graph (2026-07-05)
+
+- **Units** are now a `MeasureUnit` @Model (singular/plural, French defaults seeded on
+  first launch, extendable via "Ajouter une unité"). Ingredient page simplified: just a
+  unit dropdown, no dimension toggles. Ingredient names sentence-cased on create.
+- **Step process graph (full quantity accounting, recipe-local intermediates):**
+  - `StepInput` join = a step consumes `quantity` of a component (in the component's unit).
+  - A step optionally produces one output = a `RecipeIngredient` with `producedByStep` set
+    and a `producedName` (e.g. « Pâte »). Intermediates are excluded from the base-ingredient
+    list and appear as step outputs.
+  - `RecipeFlow.available(before:)` DERIVES what's available at each step (base + earlier
+    outputs − earlier consumption); never stored, so it can't drift. Step editor shows
+    "disponible : X" per component and takes a consumed quantity.
+  - `makeVariant` deep-copies the graph, remapping inputs/outputs in step order.
+- Verified: builds, container initializes (schema valid: StepInput join, 1-to-1 step↔output,
+  many inverses), launches on sim. Interactive flow NOT yet device-tested.
+- DEPLOY PENDING: iSQR was locked; needs uninstall→install (schema changed again).
+
 ## v1 status (built 2026-07-05)
 
 - App renamed `@main struct Kuisine`, SwiftData `ModelContainer` on CloudKit private DB.

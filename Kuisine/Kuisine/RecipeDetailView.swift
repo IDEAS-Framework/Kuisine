@@ -164,12 +164,28 @@ private struct StepRow: View {
                 }
             }
             if !step.text.isEmpty { Text(step.text) }
-            if let used = step.usedIngredients, !used.isEmpty {
-                Text(used.map(\.displayName).joined(separator: ", "))
+            if !inputsText.isEmpty {
+                Label(inputsText, systemImage: "arrow.down.to.line")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            if let out = step.output, !out.displayName.isEmpty {
+                Label("Produit : \(out.displayName) (\(out.quantityText))", systemImage: "arrow.up.forward")
+                    .font(.caption)
+                    .foregroundStyle(.tint)
+            }
         }
+    }
+
+    private var inputsText: String {
+        step.sortedInputs.compactMap { input -> String? in
+            guard let comp = input.component else { return nil }
+            let q = input.quantity
+            let n = q == q.rounded() ? String(Int(q)) : String(format: "%.2f", q)
+            let unit = comp.unit.map { " \($0.label(for: q))" } ?? ""
+            return "\(comp.displayName) (\(n)\(unit))"
+        }
+        .joined(separator: ", ")
     }
 
     private var parameterText: String? {

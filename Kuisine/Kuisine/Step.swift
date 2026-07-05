@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 /// One step in a recipe's method. Structured so experiments can target it and
-/// (later) so scaling/inheritance can reason about it.
+/// so the process graph can track what it consumes and produces.
 @Model
 final class Step {
     /// Stable element identity (inheritance-ready).
@@ -19,8 +19,13 @@ final class Step {
 
     var recipe: Recipe?
 
-    /// Ingredients this step consumes (many-to-many with `RecipeIngredient`).
-    var usedIngredients: [RecipeIngredient]? = []
+    /// What this step consumes (base ingredients and/or earlier outputs).
+    @Relationship(deleteRule: .cascade, inverse: \StepInput.step)
+    var inputs: [StepInput]? = []
+
+    /// The intermediate component this step produces, if any (recipe-local).
+    @Relationship(deleteRule: .cascade, inverse: \RecipeIngredient.producedByStep)
+    var output: RecipeIngredient?
 
     /// Experiments targeting this specific step.
     @Relationship(inverse: \Experiment.targetStep)
@@ -36,5 +41,9 @@ final class Step {
     var action: StepAction {
         get { StepAction(rawValue: actionRaw) ?? .none }
         set { actionRaw = newValue.rawValue }
+    }
+
+    var sortedInputs: [StepInput] {
+        (inputs ?? []).sorted { ($0.component?.order ?? 0) < ($1.component?.order ?? 0) }
     }
 }

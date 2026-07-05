@@ -43,8 +43,12 @@ final class Recipe {
         self.updatedAt = .now
     }
 
+    /// Base ingredients only (intermediates produced by steps are excluded here;
+    /// they appear as step outputs in the process graph).
     var sortedIngredients: [RecipeIngredient] {
-        (recipeIngredients ?? []).sorted { $0.order < $1.order }
+        (recipeIngredients ?? [])
+            .filter { $0.producedByStep == nil }
+            .sorted { $0.order < $1.order }
     }
 
     var sortedSteps: [Step] {
@@ -66,24 +70,44 @@ final class Recipe {
         copy.parent = self
         context.insert(copy)
 
-        var lineMap: [PersistentIdentifier: RecipeIngredient] = [:]
+        // Base ingredients, keyed by original id so step inputs can remap.
+        var componentMap: [PersistentIdentifier: RecipeIngredient] = [:]
         for line in sortedIngredients {
             let newLine = RecipeIngredient(quantity: line.quantity, note: line.note, order: line.order)
             newLine.ingredient = line.ingredient
             newLine.unit = line.unit
             newLine.recipe = copy
             context.insert(newLine)
-            lineMap[line.persistentModelID] = newLine
+            componentMap[line.persistentModelID] = newLine
         }
 
+        // Steps in order, so an intermediate exists before a later step consumes it.
         for step in sortedSteps {
             let newStep = Step(order: step.order, text: step.text, action: step.action)
             newStep.durationMinutes = step.durationMinutes
             newStep.temperatureCelsius = step.temperatureCelsius
             newStep.speed = step.speed
             newStep.recipe = copy
-            newStep.usedIngredients = (step.usedIngredients ?? []).compactMap { lineMap[$0.persistentModelID] }
             context.insert(newStep)
+
+            if let out = step.output {
+                let newOut = RecipeIngredient(quantity: out.quantity, note: out.note, order: out.order)
+                newOut.producedName = out.producedName
+                newOut.unit = out.unit
+                newOut.recipe = copy
+                newOut.producedByStep = newStep
+                context.insert(newOut)
+                componentMap[out.persistentModelID] = newOut
+            }
+
+            for input in step.sortedInputs {
+                guard let comp = input.component,
+                      let mapped = componentMap[comp.persistentModelID] else { continue }
+                let newInput = StepInput(quantity: input.quantity)
+                newInput.step = newStep
+                newInput.component = mapped
+                context.insert(newInput)
+            }
         }
 
         return copy
