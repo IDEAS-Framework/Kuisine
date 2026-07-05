@@ -22,15 +22,25 @@ recorded changes and experiments, and share/collaborate within a family via iClo
       `Info.plist` (UIBackgroundModes=remote-notification), pbxproj wiring.
       NOTE: revisit Push Notifications capability when building family sharing (CKShare).
 - [ ] Rename the `@main` app struct from `MyApp` to something intentional (e.g. `KuisineApp`).
-- [ ] Design core data models:
-  - [ ] `Recipe` (title, ingredients, steps, tags, timestamps).
-  - [ ] `Experiment` / `RecipeVersion` — a recorded change or tweak to a recipe,
-        with notes, date, author, and outcome. This is the core differentiator.
-  - [ ] Ingredient / step modeling (structured vs. freeform text).
+- [x] Design core data models (v1):
+  - [x] `Recipe` (title, summary, ingredients, steps, isShared scope, timestamps).
+  - [x] `Experiment` — a recorded change/tweak: title, notes, outcome, rating, keep, date.
+  - [ ] Ingredient / step modeling is freeform text for now; structure later.
 - [ ] Family sharing via CloudKit shared database (`CKShare` / SwiftData sharing).
-- [ ] Basic recipe list + detail UI to replace the "Hello, world!" scaffold.
-- [ ] Add iCloud + CloudKit capabilities to the target and an entitlements file.
+- [x] Basic recipe list + detail UI replacing the scaffold (list → detail → experiment log).
+- [x] Add iCloud + CloudKit capabilities to the target and an entitlements file.
 - [ ] Add a unit test target (currently none exists).
+
+## v1 status (built 2026-07-05)
+
+- App renamed `@main struct Kuisine`, SwiftData `ModelContainer` on CloudKit private DB.
+- Screens: RecipeListView (empty state + add), RecipeDetailView (sections + experiment
+  timeline + log button), RecipeEditView, ExperimentEditView. Cross-platform-safe SwiftUI.
+- Verified: clean build, installs/launches on iOS 27 sim, correct empty-state render,
+  no runtime errors. NOT yet verified: the interactive add/log flow (couldn't drive
+  Simulator taps via automation) — needs a real-device pass on iSQR/SQR/Ele.
+- Next: on-device test of add recipe → log experiment → confirm iCloud sync across two
+  of your devices (both must be signed into the same iCloud account).
 
 ## Next — features
 
