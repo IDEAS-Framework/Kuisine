@@ -42,9 +42,19 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 - [ ] Shopping list generation from a recipe.
 - [ ] Scaling servings.
 
+## Sharing model (decided): private + shared family collection ("both/mix")
+
+Target design, built in phases:
+1. **Private sync first** — a user's recipes sync across their own devices via SwiftData's
+   CloudKit private database. Quick, foundational.
+2. **Shared family collection** — a shared CloudKit zone (`CKShare`) the family joins;
+   recipes can be *moved* from personal → shared. Personal recipes stay private by default.
+
+Implication for models: a recipe needs an ownership/scope concept (personal vs. shared) so it
+can move between the private and shared stores.
+
 ## Open questions (need decisions)
 
-- [ ] **Sharing model:** one shared family zone/database vs. per-recipe `CKShare`?
 - [ ] **Versioning model:** are experiments immutable snapshots, or diffs/notes layered
       on a mutable base recipe? How does "promote an experiment to the base" work?
 - [ ] Target platforms in practice — the project builds for iOS/macOS/visionOS, but the
