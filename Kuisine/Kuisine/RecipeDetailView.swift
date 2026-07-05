@@ -133,7 +133,7 @@ private struct IngredientLineRow: View {
         HStack {
             Text(line.displayName)
             Spacer()
-            Text(quantityText)
+            Text(line.quantityText)
                 .foregroundStyle(.secondary)
         }
         if !line.note.isEmpty {
@@ -141,12 +141,6 @@ private struct IngredientLineRow: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
-    }
-
-    private var quantityText: String {
-        let qty = line.quantity
-        let number = qty == qty.rounded() ? String(Int(qty)) : String(format: "%.2f", qty)
-        return "\(number) \(line.unit.shortName)"
     }
 }
 

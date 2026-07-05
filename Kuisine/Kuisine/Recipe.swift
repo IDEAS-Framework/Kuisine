@@ -68,9 +68,9 @@ final class Recipe {
 
         var lineMap: [PersistentIdentifier: RecipeIngredient] = [:]
         for line in sortedIngredients {
-            let newLine = RecipeIngredient(quantity: line.quantity, unit: line.unit,
-                                           note: line.note, order: line.order)
+            let newLine = RecipeIngredient(quantity: line.quantity, note: line.note, order: line.order)
             newLine.ingredient = line.ingredient
+            newLine.unit = line.unit
             newLine.recipe = copy
             context.insert(newLine)
             lineMap[line.persistentModelID] = newLine

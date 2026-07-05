@@ -3,7 +3,7 @@ import SwiftData
 
 /// Edits one ingredient line of a recipe. Resolves the ingredient against the
 /// shared catalog by name — reusing an existing entry or creating a new one on
-/// the fly — and lets you tune which units that catalog entry allows.
+/// the fly — and picks a `MeasureUnit` from the shared list.
 struct IngredientLineEditView: View {
     @Bindable var line: RecipeIngredient
     var isNew: Bool = false
@@ -11,8 +11,10 @@ struct IngredientLineEditView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Query(sort: \Ingredient.name) private var catalog: [Ingredient]
+    @Query(sort: \MeasureUnit.order) private var units: [MeasureUnit]
 
     @State private var name: String = ""
+    @State private var addingUnit = false
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -35,17 +37,13 @@ struct IngredientLineEditView: View {
         catalog.contains { $0.name.compare(trimmedName, options: .caseInsensitive) == .orderedSame }
     }
 
-    private var unitOptions: [MeasurementUnit] {
-        if let ing = line.ingredient, isLinkedToTypedName, !ing.availableUnits.isEmpty {
-            return ing.availableUnits
-        }
-        return MeasurementUnit.allCases
-    }
-
     var body: some View {
         Form {
             Section("Ingrédient") {
                 TextField("Nom (ex. Farine)", text: $name)
+                    #if os(iOS)
+                    .textInputAutocapitalization(.sentences)
+                    #endif
             }
 
             if !suggestions.isEmpty || (!trimmedName.isEmpty && !exactExists && !isLinkedToTypedName) {
@@ -63,7 +61,7 @@ struct IngredientLineEditView: View {
                     }
                     if !trimmedName.isEmpty && !exactExists {
                         Button { createAndLink() } label: {
-                            Label("Créer « \(trimmedName) »", systemImage: "plus.circle")
+                            Label("Créer « \(trimmedName.capitalizedFirstLetter) »", systemImage: "plus.circle")
                         }
                     }
                 }
@@ -75,27 +73,21 @@ struct IngredientLineEditView: View {
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
-                    Picker("Unité", selection: Binding(get: { line.unit }, set: { line.unit = $0 })) {
-                        ForEach(unitOptions) { unit in
-                            Text(unit.shortName).tag(unit)
+                    Picker("Unité", selection: unitSelection) {
+                        Text("—").tag(Optional<MeasureUnit>.none)
+                        ForEach(units) { unit in
+                            Text(unit.singular).tag(Optional(unit))
                         }
                     }
                     .labelsHidden()
+                }
+                Button { addingUnit = true } label: {
+                    Label("Ajouter une unité", systemImage: "plus.circle")
                 }
             }
 
             Section("Note") {
                 TextField("ex. finement haché", text: $line.note, axis: .vertical)
-            }
-
-            if let ing = line.ingredient, isLinkedToTypedName {
-                Section("Unités possibles pour « \(ing.name) »") {
-                    Toggle("Poids (g, kg)", isOn: bind(\.allowsWeight, on: ing))
-                    Toggle("Volume (mL, L)", isOn: bind(\.allowsVolume, on: ing))
-                    Toggle("Volumes standards (c. à s., c. à c., tasse)", isOn: bind(\.allowsCustomaryVolume, on: ing))
-                        .disabled(!ing.allowsVolume)
-                    Toggle("Compte (pièce, gousse…)", isOn: bind(\.allowsCount, on: ing))
-                }
             }
         }
         .navigationTitle(isNew ? "Nouvel ingrédient" : "Modifier l'ingrédient")
@@ -107,31 +99,31 @@ struct IngredientLineEditView: View {
                 Button("Enregistrer", action: save).disabled(trimmedName.isEmpty)
             }
         }
-        .onAppear { name = line.ingredient?.name ?? "" }
+        .sheet(isPresented: $addingUnit) {
+            NavigationStack {
+                AddUnitView { newUnit in line.unit = newUnit }
+            }
+        }
+        .onAppear {
+            name = line.ingredient?.name ?? ""
+            if line.unit == nil { line.unit = units.first }
+        }
     }
 
-    private func bind(_ keyPath: ReferenceWritableKeyPath<Ingredient, Bool>, on ing: Ingredient) -> Binding<Bool> {
-        Binding(get: { ing[keyPath: keyPath] }, set: { ing[keyPath: keyPath] = $0 })
+    private var unitSelection: Binding<MeasureUnit?> {
+        Binding(get: { line.unit }, set: { line.unit = $0 })
     }
 
     private func link(_ ing: Ingredient) {
         line.ingredient = ing
         name = ing.name
-        clampUnit()
     }
 
     private func createAndLink() {
-        let ing = Ingredient(name: trimmedName)
+        let ing = Ingredient(name: trimmedName.capitalizedFirstLetter)
         context.insert(ing)
         line.ingredient = ing
-        clampUnit()
-    }
-
-    private func clampUnit() {
-        guard let ing = line.ingredient else { return }
-        if !ing.availableUnits.contains(line.unit), let first = ing.availableUnits.first {
-            line.unit = first
-        }
+        name = ing.name
     }
 
     private func resolveIngredient() {
@@ -142,20 +134,63 @@ struct IngredientLineEditView: View {
         }) {
             line.ingredient = existing
         } else {
-            let ing = Ingredient(name: trimmedName)
+            let ing = Ingredient(name: trimmedName.capitalizedFirstLetter)
             context.insert(ing)
             line.ingredient = ing
         }
-        clampUnit()
     }
 
     private func save() {
         resolveIngredient()
+        if line.unit == nil { line.unit = units.first }
         dismiss()
     }
 
     private func cancel() {
         if isNew { context.delete(line) }
+        dismiss()
+    }
+}
+
+/// Small sheet to add a new unit (singular + plural) to the shared list.
+struct AddUnitView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @Query(sort: \MeasureUnit.order) private var units: [MeasureUnit]
+
+    var onCreate: (MeasureUnit) -> Void
+
+    @State private var singular = ""
+    @State private var plural = ""
+
+    var body: some View {
+        Form {
+            Section("Nouvelle unité") {
+                TextField("Singulier (ex. pincée)", text: $singular)
+                TextField("Pluriel (ex. pincées)", text: $plural)
+            }
+            Text("Le pluriel est utilisé à partir de 2 (ex. « 3 pincées »).")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .navigationTitle("Ajouter une unité")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Annuler", role: .cancel) { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Ajouter", action: create)
+                    .disabled(singular.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+    }
+
+    private func create() {
+        let s = singular.trimmingCharacters(in: .whitespacesAndNewlines)
+        let p = plural.trimmingCharacters(in: .whitespacesAndNewlines)
+        let unit = MeasureUnit(singular: s, plural: p, order: units.count)
+        context.insert(unit)
+        onCreate(unit)
         dismiss()
     }
 }

@@ -118,9 +118,7 @@ private struct IngredientLineLabel: View {
                 .foregroundStyle(line.ingredient?.name.isEmpty == false ? .primary : .secondary)
             Spacer()
             if line.quantity > 0 {
-                let qty = line.quantity
-                let number = qty == qty.rounded() ? String(Int(qty)) : String(format: "%.2f", qty)
-                Text("\(number) \(line.unit.shortName)").foregroundStyle(.secondary)
+                Text(line.quantityText).foregroundStyle(.secondary)
             }
         }
     }

@@ -28,6 +28,7 @@ struct RecipeListView: View {
                 }
             }
             .navigationTitle("Kuisine")
+            .task { MeasureUnit.seedDefaultsIfNeeded(in: context) }
             .navigationDestination(for: Recipe.self) { recipe in
                 RecipeDetailView(recipe: recipe)
             }
