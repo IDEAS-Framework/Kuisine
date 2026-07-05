@@ -17,6 +17,10 @@ It is **collaborative and family-oriented**: recipes should be shareable within 
 
 Design data models and features around these two pillars: (1) recipe *history / experiments*, and (2) *family sharing* via CloudKit. See `backlog.md` for the current plan and open architecture questions.
 
+**Data stack (decided): SwiftData + CloudKit.** Persist with SwiftData `@Model` types and enable automatic CloudKit sync; use CloudKit's shared database for family collaboration. Don't reach for Core Data or a hand-rolled CloudKit layer unless a concrete limitation forces it.
+
+**Testing devices are a mix of iPhones and iPads** (iSQR, SQR, Ele). When a change needs on-device verification, confirm which device the user should use rather than assuming a form factor.
+
 ## Project setup
 
 Kuisine is a **multiplatform SwiftUI app** (single target, one shared codebase). `SDKROOT = auto` with `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx xros xrsimulator` means the same target builds for iOS, macOS, and visionOS; deployment target is 27.0 across all platforms, Swift 5. As of now the app is the default scaffold (a `ContentView` showing "Hello, world!"), so there is no domain architecture yet — this is a greenfield starting point.

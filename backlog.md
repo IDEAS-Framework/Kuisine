@@ -10,9 +10,10 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 
 ## Now — foundations
 
+- [x] Flatten nested git repos into one repo backed by `IDEAS-Framework/Kuisine`; add `.gitignore`.
+- [x] Decide the persistence + sync stack → **SwiftData + CloudKit** (local storage + automatic
+      iCloud sync, CloudKit shared database for family collaboration).
 - [ ] Rename the `@main` app struct from `MyApp` to something intentional (e.g. `KuisineApp`).
-- [ ] Decide the persistence + sync stack (see Open Questions). Leading candidate:
-      **SwiftData + CloudKit** for local storage with automatic iCloud sync.
 - [ ] Design core data models:
   - [ ] `Recipe` (title, ingredients, steps, tags, timestamps).
   - [ ] `Experiment` / `RecipeVersion` — a recorded change or tweak to a recipe,
@@ -39,12 +40,16 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 
 ## Open questions (need decisions)
 
-- [ ] **Persistence stack:** SwiftData+CloudKit, Core Data+CloudKit, or a custom
-      CloudKit layer? (Affects everything downstream.)
 - [ ] **Sharing model:** one shared family zone/database vs. per-recipe `CKShare`?
 - [ ] **Versioning model:** are experiments immutable snapshots, or diffs/notes layered
       on a mutable base recipe? How does "promote an experiment to the base" work?
-- [ ] **Device names iSQR / SQR / Ele:** which are iPhones vs. iPads, and their models?
-      (Needed to pick `xcodebuild -destination` targets for on-device runs.)
-- [ ] Target platforms in practice — the project builds for iOS/macOS/visionOS, but is
-      the real focus iPhone + iPad only? Trim `SUPPORTED_PLATFORMS` if so.
+- [ ] Target platforms in practice — the project builds for iOS/macOS/visionOS, but the
+      testing devices are iPhones + iPads. Trim `SUPPORTED_PLATFORMS` to iOS if macOS/visionOS
+      aren't real targets.
+
+## Resolved decisions
+
+- Persistence + sync: **SwiftData + CloudKit**.
+- Git: single repo, remote `IDEAS-Framework/Kuisine`, commit + push to `main` often.
+- Devices for on-device testing: **iSQR, SQR, Ele** — a mix of iPhones and iPads
+  (confirm which per test).
