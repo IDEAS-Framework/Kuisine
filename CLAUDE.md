@@ -21,6 +21,12 @@ Design data models and features around these two pillars: (1) recipe *history / 
 
 **Testing devices are a mix of iPhones and iPads** (iSQR, SQR, Ele). When a change needs on-device verification, confirm which device the user should use rather than assuming a form factor.
 
+**Identifiers (stable — do not change):**
+- Bundle ID: `com.ideasframework.kuisine`
+- CloudKit container: `iCloud.com.ideasframework.kuisine`
+
+Changing either after data exists re-registers the CloudKit container and orphans synced records.
+
 ## Project setup
 
 Kuisine is a **multiplatform SwiftUI app** (single target, one shared codebase). `SDKROOT = auto` with `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx xros xrsimulator` means the same target builds for iOS, macOS, and visionOS; deployment target is 27.0 across all platforms, Swift 5. As of now the app is the default scaffold (a `ContentView` showing "Hello, world!"), so there is no domain architecture yet — this is a greenfield starting point.
