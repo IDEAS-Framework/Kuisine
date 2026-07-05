@@ -14,9 +14,13 @@ recorded changes and experiments, and share/collaborate within a family via iClo
 - [x] Decide the persistence + sync stack → **SwiftData + CloudKit** (local storage + automatic
       iCloud sync, CloudKit shared database for family collaboration).
 - [x] Set real bundle ID `com.ideasframework.kuisine` (was a placeholder).
-- [ ] **Xcode signing + capabilities (user does this — see checklist below).** Select team,
-      confirm bundle ID, add iCloud→CloudKit (container `iCloud.com.ideasframework.kuisine`),
-      Background Modes→Remote notifications, Push Notifications. This creates the entitlements file.
+- [x] **Xcode signing + capabilities done.** Team = Victor Gallant, bundle ID confirmed,
+      iCloud→CloudKit enabled with container `iCloud.com.ideasframework.kuisine`,
+      Background Modes→Remote notifications, macOS App Sandbox Outgoing Connections (Client).
+      Entitlements include `aps-environment` (push) — so the separate Push Notifications
+      capability was not needed for private sync. Files committed: `Kuisine.entitlements`,
+      `Info.plist` (UIBackgroundModes=remote-notification), pbxproj wiring.
+      NOTE: revisit Push Notifications capability when building family sharing (CKShare).
 - [ ] Rename the `@main` app struct from `MyApp` to something intentional (e.g. `KuisineApp`).
 - [ ] Design core data models:
   - [ ] `Recipe` (title, ingredients, steps, tags, timestamps).
