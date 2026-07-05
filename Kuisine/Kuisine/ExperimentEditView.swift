@@ -3,6 +3,7 @@ import SwiftData
 
 struct ExperimentEditView: View {
     @Bindable var experiment: Experiment
+    var recipe: Recipe
     var isNew: Bool = false
 
     @Environment(\.dismiss) private var dismiss
@@ -14,43 +15,71 @@ struct ExperimentEditView: View {
 
     var body: some View {
         Form {
-            Section("What did you try?") {
-                TextField("Title (e.g. More garlic)", text: $experiment.title)
-                TextField("Notes — what you changed", text: $experiment.notes, axis: .vertical)
+            Section("Qu'avez-vous tenté ?") {
+                TextField("Titre (ex. Plus d'ail)", text: $experiment.title)
+                TextField("Notes — ce que vous avez changé", text: $experiment.notes, axis: .vertical)
                     .lineLimit(3...)
             }
-            Section("How did it go?") {
-                TextField("Outcome", text: $experiment.outcome, axis: .vertical)
+
+            Section("Élément concerné") {
+                Picker("Ingrédient", selection: ingredientSelection) {
+                    Text("Aucun").tag(Optional<RecipeIngredient>.none)
+                    ForEach(recipe.sortedIngredients) { line in
+                        Text(line.displayName).tag(Optional(line))
+                    }
+                }
+                Picker("Étape", selection: stepSelection) {
+                    Text("Aucune").tag(Optional<Step>.none)
+                    ForEach(Array(recipe.sortedSteps.enumerated()), id: \.element.id) { index, step in
+                        Text(stepLabel(index: index + 1, step: step)).tag(Optional(step))
+                    }
+                }
+            }
+
+            Section("Résultat") {
+                TextField("Comment est-ce ?", text: $experiment.outcome, axis: .vertical)
                     .lineLimit(2...)
                 Stepper(value: $experiment.rating, in: 0...5) {
                     HStack {
-                        Text("Rating")
+                        Text("Note")
                         Spacer()
                         Text(experiment.rating == 0 ? "—" : String(repeating: "★", count: experiment.rating))
                             .foregroundStyle(.secondary)
                     }
                 }
-                Toggle("Keeper — fold into the recipe", isOn: $experiment.keep)
+                Toggle("À conserver — intégrer à la recette", isOn: $experiment.keep)
             }
+
             Section {
                 DatePicker("Date", selection: $experiment.date, displayedComponents: .date)
             }
         }
-        .navigationTitle(isNew ? "New Experiment" : "Edit Experiment")
+        .navigationTitle(isNew ? "Nouvelle expérience" : "Modifier l'expérience")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel", role: .cancel, action: cancel)
+                Button("Annuler", role: .cancel, action: cancel)
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { dismiss() }.disabled(!canSave)
+                Button("Enregistrer") { dismiss() }.disabled(!canSave)
             }
         }
     }
 
+    private var ingredientSelection: Binding<RecipeIngredient?> {
+        Binding(get: { experiment.targetIngredient }, set: { experiment.targetIngredient = $0 })
+    }
+
+    private var stepSelection: Binding<Step?> {
+        Binding(get: { experiment.targetStep }, set: { experiment.targetStep = $0 })
+    }
+
+    private func stepLabel(index: Int, step: Step) -> String {
+        let base = step.action != .none ? step.action.displayName : "Étape"
+        return "\(index). \(base)"
+    }
+
     private func cancel() {
-        if isNew {
-            context.delete(experiment)
-        }
+        if isNew { context.delete(experiment) }
         dismiss()
     }
 }

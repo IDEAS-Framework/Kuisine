@@ -12,9 +12,9 @@ struct RecipeListView: View {
             Group {
                 if recipes.isEmpty {
                     ContentUnavailableView {
-                        Label("No Recipes Yet", systemImage: "fork.knife")
+                        Label("Aucune recette", systemImage: "fork.knife")
                     } description: {
-                        Text("Add your first recipe, then log the tweaks and experiments you try.")
+                        Text("Ajoutez votre première recette, puis notez les ajustements et expériences que vous tentez.")
                     }
                 } else {
                     List {
@@ -34,7 +34,7 @@ struct RecipeListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: addRecipe) {
-                        Label("Add Recipe", systemImage: "plus")
+                        Label("Ajouter une recette", systemImage: "plus")
                     }
                 }
             }
@@ -64,20 +64,39 @@ private struct RecipeRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(recipe.title.isEmpty ? "Untitled Recipe" : recipe.title)
-                .font(.headline)
+            HStack(spacing: 6) {
+                Text(recipe.title.isEmpty ? "Recette sans titre" : recipe.title)
+                    .font(.headline)
+                if recipe.isVariant {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
             if !recipe.summary.isEmpty {
                 Text(recipe.summary)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            let count = recipe.experiments?.count ?? 0
-            if count > 0 {
-                Text(count == 1 ? "1 experiment" : "\(count) experiments")
+            let ingredients = recipe.recipeIngredients?.count ?? 0
+            let experiments = recipe.experiments?.count ?? 0
+            if ingredients > 0 || experiments > 0 {
+                Text(subtitle(ingredients: ingredients, experiments: experiments))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
         }
+    }
+
+    private func subtitle(ingredients: Int, experiments: Int) -> String {
+        var parts: [String] = []
+        if ingredients > 0 {
+            parts.append(ingredients == 1 ? "1 ingrédient" : "\(ingredients) ingrédients")
+        }
+        if experiments > 0 {
+            parts.append(experiments == 1 ? "1 expérience" : "\(experiments) expériences")
+        }
+        return parts.joined(separator: " · ")
     }
 }

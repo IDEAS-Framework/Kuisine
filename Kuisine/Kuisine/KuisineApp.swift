@@ -6,7 +6,10 @@ struct Kuisine: App {
     let container: ModelContainer
 
     init() {
-        let schema = Schema([Recipe.self, Experiment.self])
+        let schema = Schema([
+            Recipe.self, RecipeIngredient.self, Ingredient.self,
+            Step.self, Experiment.self,
+        ])
         // Sync each user's own recipes across their devices via the CloudKit
         // private database. Family sharing (shared DB) is a later phase — see backlog.
         let configuration = ModelConfiguration(
